@@ -1,7 +1,8 @@
+import {supabaseConfig} from './supabase-config.js';
 import {createClient} from '@supabase/supabase-js';
 import {loadScorebook,saveScorebook} from './cloud-store.js';
-const url=import.meta.env.VITE_SUPABASE_URL;
-const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY||import.meta.env.VITE_SUPABASE_ANON_KEY;
+const url=import.meta.env.VITE_SUPABASE_URL||supabaseConfig.url;
+const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY||import.meta.env.VITE_SUPABASE_ANON_KEY||supabaseConfig.publishableKey;
 let client=null,configurationError='';
 try {if(url&&key){if(key.startsWith('sb_secret_'))throw Error();if(key.split('.').length===3){const payload=JSON.parse(atob(key.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));if(payload.role==='service_role')throw Error();}client=createClient(url,key);}}catch {configurationError='Supabase configuration is invalid. Check the project URL and publishable key.';}
 export const cloud={client,configurationError,session:null,book:null,books:[],busy:false,error:'',pending:false};

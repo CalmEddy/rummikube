@@ -53,13 +53,13 @@ The app supports **private shared scorebooks**. Each scorebook contains its own 
 
 ### One-time project setup
 
-Connecting a repository in Supabase does not automatically configure the browser app or apply its schema.
+The browser app is configured for the project in `src/supabase-config.js` using its public publishable key. GitHub Actions variables are optional overrides. Connecting a repository in Supabase does not automatically apply the database schema.
 
 1. In your Supabase project's **SQL Editor**, run the contents of `supabase/migrations/202611170001_shared_scorebooks.sql` once. If using the Supabase CLI instead, link your existing project and run `supabase db push`. The migration creates tables, row-level security policies, and authenticated create/join functions. Do not disable row-level security.
 2. In Supabase **Authentication → Providers**, enable **Email** and allow new sign-ups if your group needs them. In **Authentication → Email Templates → Magic Link**, include `{{ .Token }}` so users receive the email code the app asks for. Supabase supports email OTP sign-in without a password. Configure production SMTP if needed for delivery limits or recipient restrictions. If using email links too, set the Site URL and allowed redirect URL to `https://calmeddy.github.io/rummikube/`.
 3. Find the **Project URL** and **publishable key** in the project's connection/API settings. Only the public/publishable (or legacy anon) key belongs in this browser app. **Never supply a secret/service-role key or database password.**
-4. In GitHub **Settings → Secrets and variables → Actions → Variables**, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. The workflow also accepts repository secrets with those names and the legacy `VITE_SUPABASE_ANON_KEY` secret. These are build-time values: rerun the Pages deployment after changing them.
-5. For local development, copy `.env.example` to `.env.local`, enter those public values, and restart `npm run dev`. No values are committed.
+4. Optional: to override the configured project, in GitHub **Settings → Secrets and variables → Actions → Variables**, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. The workflow also accepts repository secrets with those names and the legacy `VITE_SUPABASE_ANON_KEY` secret. These are build-time values: rerun the Pages deployment after changing them.
+5. For local development, copy `.env.example` to `.env.local`, enter those public values, and restart `npm run dev`. Only the public project defaults are committed; local override files are ignored.
 
 ### Use and migrate
 
