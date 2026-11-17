@@ -1,6 +1,6 @@
 # Tile & Tally
 
-A responsive Rummikube scorekeeper for 2–6 players. Create reusable player profiles, track multiple sessions, add or edit signed round scores, and finish sessions to update lifetime statistics. Completed sessions can be reopened or edited. Tied leaders share a win.
+A responsive Rummikube scorekeeper for 2–6 players. Create reusable player profiles, track multiple sessions, calculate and edit round scores, and finish sessions to update lifetime statistics. Completed sessions can be reopened or edited. Tied leaders share a win.
 
 ## Develop
 
@@ -23,7 +23,13 @@ Tests cover score totals, editing, completed-session aggregation, active-session
 
 ## Scoring and storage
 
-Enter positive or negative integer points for each player; higher totals win. The app accepts house rules and does not enforce zero-sum rounds. Only completed sessions affect lifetime wins, totals, averages, and best-game statistics.
+Select the player who went out, then enter each opponent’s remaining numbered tile total and joker count separately. Numbered tiles use face value; each remaining joker is 30 points. Opponents receive the negative value of their racks, and the player who went out receives the combined positive total. For example, racks of 12 and 8 plus one joker produce −12, −38, and +50 for the winner.
+
+When the pool is empty and no one can play, choose the blocked-game option. The lowest rack wins: subtract that rack value from every other rack; opponents lose those differences and the winner receives their sum. For racks of 5, 12, and 20 the scores are +22, −7, and −15. Tied lowest blocked racks require manual house-rule scoring rather than selecting a winner arbitrarily.
+
+Calculated rounds sum to zero. Editing rack values recalculates all round scores and session statistics. Existing signed-score rounds remain unchanged and open in manual mode; manual scoring also supports house rules. Only completed sessions affect lifetime wins, totals, averages, and best-game statistics.
+
+Rules reference: [official Rummikub rules](https://rummikub.com/rules/). The official site was inaccessible from the development environment during this change; the implementation follows the standard scoring rules described above.
 
 Data stays in localStorage in the current browser and origin. It does not sync between devices. Export and import JSON backups to transfer data; importing replaces current data after confirmation. Clearing browser storage deletes saved scores. No accounts, credentials, or backend services are needed. Google Fonts are optional; system fonts serve as fallbacks.
 
