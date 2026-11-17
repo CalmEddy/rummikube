@@ -31,7 +31,7 @@ Calculated rounds sum to zero. Editing rack values recalculates all round scores
 
 Rules reference: [official Rummikub rules](https://rummikub.com/rules/). The official site was inaccessible from the development environment during this change; the implementation follows the standard scoring rules described above.
 
-Data stays in localStorage in the current browser and origin. It does not sync between devices. Export and import JSON backups to transfer data; importing replaces current data after confirmation. Clearing browser storage deletes saved scores. No accounts, credentials, or backend services are needed. Google Fonts are optional; system fonts serve as fallbacks.
+In device-only mode, data stays in localStorage in the current browser and origin and does not sync. Export and import JSON backups to transfer data; importing replaces the selected device or shared scorebook after confirmation. Clearing browser storage deletes device-only scores. Shared mode uses Supabase sign-in and storage as described below. Google Fonts are optional; system fonts serve as fallbacks.
 
 ## Deploy to GitHub Pages
 
@@ -46,3 +46,30 @@ Each push to `main` installs locked dependencies, runs tests, builds the app, an
 Vite's base path is `/rummikube/`, so local development and preview also use that path. If you rename the repository or use a custom domain, update `base` in `vite.config.js` accordingly.
 
 Scores remain local to each browser. Export a backup from the old address before switching to the Pages address, then import it there.
+
+## Shared storage with Supabase
+
+The app supports **private shared scorebooks**. Each scorebook contains its own players, sessions, and calculated statistics. Sign in with the same email on multiple devices, or let other signed-in accounts join using a private invite code. Members can read and edit the entire scorebook. Device-only mode remains available; signing out restores the device's original data, not another account's shared data.
+
+### One-time project setup
+
+Connecting a repository in Supabase does not automatically configure the browser app or apply its schema.
+
+1. In your Supabase project's **SQL Editor**, run the contents of `supabase/migrations/202611170001_shared_scorebooks.sql` once. If using the Supabase CLI instead, link your existing project and run `supabase db push`. The migration creates tables, row-level security policies, and authenticated create/join functions. Do not disable row-level security.
+2. In Supabase **Authentication → Providers**, enable **Email** and allow new sign-ups if your group needs them. In **Authentication → Email Templates → Magic Link**, include `{{ .Token }}` so users receive the email code the app asks for. Supabase supports email OTP sign-in without a password. Configure production SMTP if needed for delivery limits or recipient restrictions. If using email links too, set the Site URL and allowed redirect URL to `https://calmeddy.github.io/rummikube/`.
+3. Find the **Project URL** and **publishable key** in the project's connection/API settings. Only the public/publishable (or legacy anon) key belongs in this browser app. **Never supply a secret/service-role key or database password.**
+4. In GitHub **Settings → Secrets and variables → Actions → Variables**, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. The workflow also accepts repository secrets with those names and the legacy `VITE_SUPABASE_ANON_KEY` secret. These are build-time values: rerun the Pages deployment after changing them.
+5. For local development, copy `.env.example` to `.env.local`, enter those public values, and restart `npm run dev`. No values are committed.
+
+### Use and migrate
+
+- Select **Sign in / sync**, enter your email, and verify the emailed code.
+- Create a scorebook under **Scorebooks & sharing**. Creating one starts empty and preserves your device's original data.
+- To migrate, open **Scorebooks & sharing → Import this device's saved data**. This replaces the selected shared scorebook after confirmation; export a backup first if it already contains scores. JSON backup import also targets the currently selected scorebook.
+- On another device, sign in with the same account and open that scorebook. For a different account, send the invite code privately and choose **Join scorebook**. Anyone signed in with the code can join, view scores, and edit; treat it as an invitation credential.
+- Idle pages refresh every 30 seconds; **Refresh** fetches immediately. Open dialogs and unsaved edits are not automatically replaced. Concurrent saves use an optimistic revision check. A failed/conflicting save stays visible with an explicit unsaved warning; retry or export it before refreshing. The app never silently overwrites a newer remote revision.
+- Shared mode needs a network connection; offline edits are not queued. Local mode and exports are available separately. This document-based design suits a small game group, not very large archives or high-volume concurrent editing.
+
+### Validation status
+
+Unit tests cover shared reads, revision conflicts, and network failures in addition to scoring. Browser checks can use a mock Supabase endpoint. Applying the SQL migration, verifying email delivery, RLS isolation between real accounts, and cross-device persistence on your actual project require its configuration; they must be checked after project setup.

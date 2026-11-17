@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {loadScorebook,saveScorebook} from '../src/cloud-store.js';
+function database(){let row={id:'book',revision:0,name:'Friends',data:{players:[],games:[]}};return {get row(){return row;},from(table){assert.equal(table,'scorebooks');let patch,filters=[];const query={select(){return query;},update(value){patch=value;return query;},eq(key,value){filters.push([key,value]);return query;},single(){return query.maybeSingle();},async maybeSingle(){if(!filters.every(([k,v])=>row[k]===v))return {data:null,error:null};if(patch)row={...row,...structuredClone(patch)};return {data:structuredClone(row),error:null};}};return query;}};}
+test('shared state survives loading from another device',async()=>{const db=database();const first=await loadScorebook(db,'book');const next=await saveScorebook(db,first,{players:[{id:'a',name:'Alex'}],games:[]});assert.equal(next.revision,1);assert.equal((await loadScorebook(db,'book')).data.players[0].name,'Alex');});
+test('stale device cannot overwrite a newer revision',async()=>{const db=database();const first=await loadScorebook(db,'book');const stale=await loadScorebook(db,'book');await saveScorebook(db,first,{players:[{id:'a',name:'Alex'}],games:[]});await assert.rejects(saveScorebook(db,stale,{players:[],games:[]}),/Another device changed/);assert.equal(db.row.data.players.length,1);});
+test('backend failures propagate instead of being reported as saved',async()=>{const q={update(){return q;},eq(){return q;},select(){return q;},async maybeSingle(){return {error:new Error('Network unavailable')};}};await assert.rejects(saveScorebook({from:()=>q},{id:'b',revision:1},{players:[],games:[]}),/Network unavailable/);});
+
+import {validateSharedData} from '../src/cloud-store.js';
+test('rejects corrupted shared documents and unsafe stored identifiers',()=>{assert.throws(()=>validateSharedData({players:[{id:'"><script>',name:'Alex'}],games:[]}),/player data/);assert.throws(()=>validateSharedData({players:[],games:[{id:'g'}]}),/session data/);});
