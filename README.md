@@ -73,3 +73,9 @@ The browser app is configured for the project in `src/supabase-config.js` using 
 ### Validation status
 
 Unit tests cover shared reads, revision conflicts, and network failures in addition to scoring. Browser checks can use a mock Supabase endpoint. Applying the SQL migration, verifying email-link delivery and redirect allowlisting, RLS isolation between real accounts, and cross-device persistence on your actual project require its configuration; they must be checked after project setup.
+
+### Staying signed in
+
+Supabase sessions are saved in this browser's localStorage and refresh automatically. Returning users are restored without another email request; the last scorebook (or the only available scorebook) opens automatically. Use the same browser and app address on each visit. The app never sends sign-in emails automatically.
+
+Signing out removes this browser's session only, keeping other devices signed in. A new browser/device, cleared storage, private browsing, or a session revoked/expired by Supabase can require a new email link. Browser persistence cannot override the project's configured authentication lifetime. On shared devices, use **Sign out** when finished.
