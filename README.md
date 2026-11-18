@@ -56,14 +56,14 @@ The app supports **private shared scorebooks**. Each scorebook contains its own 
 The browser app is configured for the project in `src/supabase-config.js` using its public publishable key. GitHub Actions variables are optional overrides. Connecting a repository in Supabase does not automatically apply the database schema.
 
 1. In your Supabase project's **SQL Editor**, run the contents of `supabase/migrations/202611170001_shared_scorebooks.sql` once. If using the Supabase CLI instead, link your existing project and run `supabase db push`. The migration creates tables, row-level security policies, and authenticated create/join functions. Do not disable row-level security.
-2. In Supabase **Authentication → Providers**, enable **Email** and allow new sign-ups if your group needs them. In **Authentication → Email Templates → Magic Link**, include `{{ .Token }}` so users receive the email code the app asks for. Supabase supports email OTP sign-in without a password. Configure production SMTP if needed for delivery limits or recipient restrictions. If using email links too, set the Site URL and allowed redirect URL to `https://calmeddy.github.io/rummikube/`.
+2. In Supabase **Authentication → Providers**, enable **Email** and allow new sign-ups if your group needs them. Keep the default Magic Link email template; no template editing is needed. Supabase supports email-link sign-in without a password. Configure production SMTP if needed for delivery limits or recipient restrictions. In **Authentication → URL Configuration → Redirect URLs**, add exactly `https://calmeddy.github.io/rummikube/`. The app sends this URL with each link request. Keep the existing Site URL if another app uses this project. Without an allowed redirect URL, Supabase can fall back to that other app. For local development, also allow the exact localhost URL you use (for example `http://localhost:5173/rummikube/`).
 3. Find the **Project URL** and **publishable key** in the project's connection/API settings. Only the public/publishable (or legacy anon) key belongs in this browser app. **Never supply a secret/service-role key or database password.**
 4. Optional: to override the configured project, in GitHub **Settings → Secrets and variables → Actions → Variables**, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. The workflow also accepts repository secrets with those names and the legacy `VITE_SUPABASE_ANON_KEY` secret. These are build-time values: rerun the Pages deployment after changing them.
 5. For local development, copy `.env.example` to `.env.local`, enter those public values, and restart `npm run dev`. Only the public project defaults are committed; local override files are ignored.
 
 ### Use and migrate
 
-- Select **Sign in / sync**, enter your email, and verify the emailed code.
+- Select **Sign in / sync**, enter your email, and open the newest emailed sign-in link. It returns to the app and signs you in automatically.
 - Create a scorebook under **Scorebooks & sharing**. Creating one starts empty and preserves your device's original data.
 - To migrate, open **Scorebooks & sharing → Import this device's saved data**. This replaces the selected shared scorebook after confirmation; export a backup first if it already contains scores. JSON backup import also targets the currently selected scorebook.
 - On another device, sign in with the same account and open that scorebook. For a different account, send the invite code privately and choose **Join scorebook**. Anyone signed in with the code can join, view scores, and edit; treat it as an invitation credential.
@@ -72,4 +72,4 @@ The browser app is configured for the project in `src/supabase-config.js` using 
 
 ### Validation status
 
-Unit tests cover shared reads, revision conflicts, and network failures in addition to scoring. Browser checks can use a mock Supabase endpoint. Applying the SQL migration, verifying email delivery, RLS isolation between real accounts, and cross-device persistence on your actual project require its configuration; they must be checked after project setup.
+Unit tests cover shared reads, revision conflicts, and network failures in addition to scoring. Browser checks can use a mock Supabase endpoint. Applying the SQL migration, verifying email-link delivery and redirect allowlisting, RLS isolation between real accounts, and cross-device persistence on your actual project require its configuration; they must be checked after project setup.
